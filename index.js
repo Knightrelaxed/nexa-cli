@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 // ============================================================
 // N.E.X.A Universal CLI Client
 // Menghubungkan terminal laptop manapun ke server N.E.X.A di HF.

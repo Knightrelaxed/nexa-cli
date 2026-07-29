@@ -1,4 +1,4 @@
-﻿# N.E.X.A Universal CLI
+# N.E.X.A Universal CLI
 
 Terminal interface untuk **N.E.X.A AI Assistant** — terhubung ke server N.E.X.A dari laptop manapun.
 
