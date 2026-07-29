@@ -63,9 +63,9 @@ function drawBox(lines, borderColor = C.cyan) {
 
 function renderBanner(serverUrl = 'http://127.0.0.1:3000') {
   const boxContent = [
-    `${C.bWhite}N.E.X.A CORE${C.reset}  ${C.grey}│${C.reset}  ${C.bCyan}UNIVERSAL TERMINAL INTERFACE v2.5${C.reset}`,
+    `${C.bWhite}N.E.X.A CORE${C.reset}  ${C.grey}│${C.reset}  ${C.bCyan}UNIVERSAL TERMINAL INTERFACE v2.8${C.reset}`,
     `${C.grey}──────────────────────────────────────────────────────${C.reset}`,
-    `${C.cyan}STATUS :${C.reset} ${C.bGreen}ONLINE${C.reset}          ${C.cyan}USER :${C.reset} ${C.bWhite}TUAN FAQIH HIDAYATULLOH${C.reset}`,
+    `${C.cyan}STATUS :${C.reset} ${C.bGreen}ONLINE${C.reset}          ${C.cyan}USER :${C.reset} ${C.bWhite}FAQIH HIDAYATULLOH${C.reset}`,
     `${C.cyan}STREAM :${C.reset} ${C.bMagenta}REALTIME PUSH${C.reset}   ${C.cyan}AUTH :${C.reset} ${C.bGreen}AES-CLI-SEC (OK)${C.reset}`,
     `${C.cyan}SERVER :${C.reset} ${C.white}${serverUrl}${C.reset}`
   ];
