@@ -91,9 +91,29 @@ function saveConfig(cfg) {
   fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), 'utf8');
 }
 
+// Helper to convert HTML tags (<b>, <i>, <code>) & Markdown (**bold**) into ANSI Terminal Colors
+function cleanAndFormatHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<b(?:\s+[^>]*)?>(.*?)<\/b>/gi, `${C.bYellow}$1${C.reset}${C.white}`)
+    .replace(/<strong(?:\s+[^>]*)?>(.*?)<\/strong>/gi, `${C.bYellow}$1${C.reset}${C.white}`)
+    .replace(/\*\*(.*?)\*\*/g, `${C.bYellow}$1${C.reset}${C.white}`)
+    .replace(/<code(?:\s+[^>]*)?>(.*?)<\/code>/gi, `${C.bCyan}$1${C.reset}${C.white}`)
+    .replace(/<i(?:\s+[^>]*)?>(.*?)<\/i>/gi, `${C.dim}$1${C.reset}${C.white}`)
+    .replace(/<em(?:\s+[^>]*)?>(.*?)<\/em>/gi, `${C.dim}$1${C.reset}${C.white}`)
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+}
+
 // ── UI Framing Helpers (Minimalist Left Accent Bar) ─────────────
 function formatReplyBox(reply, elapsed, intent) {
-  const cleanReply = String(reply).replace(/<br\s*\/?>/gi, '\n').trim();
+  const cleanReply = cleanAndFormatHtml(reply);
   const border = `${C.cyan}│${C.reset}`;
   const lines = cleanReply.split('\n');
   const framedLines = lines.map(line => line.trim() ? `${border}  ${C.white}${line}${C.reset}` : `${border}`).join('\n');
@@ -106,7 +126,7 @@ ${framedLines}
 }
 
 function formatPushBox(message) {
-  const cleanMessage = String(message).replace(/<br\s*\/?>/gi, '\n').trim();
+  const cleanMessage = cleanAndFormatHtml(message);
   const border = `${C.bMagenta}│${C.reset}`;
   const lines = cleanMessage.split('\n');
   const framedLines = lines.map(line => line.trim() ? `${border}  ${C.white}${line}${C.reset}` : `${border}`).join('\n');
