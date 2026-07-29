@@ -136,6 +136,55 @@ async function setupConfig(rl) {
   return cfg;
 }
 
+// ── SSE Stream Listener ─────────────────────────────────────────
+function connectStream(cfg, rl) {
+  const url = new URL('/webhook/cli/stream', cfg.serverUrl);
+  const isHttps = url.protocol === 'https:';
+  const transport = isHttps ? https : http;
+  const port = url.port || (isHttps ? 443 : 80);
+
+  const options = {
+    hostname: url.hostname,
+    port: port,
+    path: url.pathname,
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${cfg.secret}` }
+  };
+
+  const req = transport.request(options, (res) => {
+    if (res.statusCode === 401 || res.statusCode === 403) return; // Stop if unauthorized
+    
+    res.setEncoding('utf8');
+    let buffer = '';
+    
+    res.on('data', (chunk) => {
+      buffer += chunk;
+      let lines = buffer.split('\n\n');
+      buffer = lines.pop(); 
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const dataStr = line.slice(6).trim();
+            if (!dataStr) continue;
+            const parsed = JSON.parse(dataStr);
+            if (parsed.type === 'notification') {
+              process.stdout.write('\x1b[2K\r'); 
+              console.log(`\n\x1b[35m🔔 [N.E.X.A PUSH]\x1b[0m:\n\x1b[97m${parsed.message}\x1b[0m\n`);
+              rl.prompt(true); // Memunculkan kembali prompt input beserta teks yang sedang diketik
+            }
+          } catch (e) { }
+        }
+      }
+    });
+
+    res.on('end', () => setTimeout(() => connectStream(cfg, rl), 5000));
+  });
+
+  req.on('error', () => setTimeout(() => connectStream(cfg, rl), 5000));
+  req.end();
+}
+
 // ── Main Entry Point ───────────────────────────────────────────
 async function main() {
   console.log(BANNER);
@@ -144,6 +193,7 @@ async function main() {
     input : process.stdin,
     output: process.stdout
   });
+  rl.setPrompt('\x1b[97m👤 Tuan Faqih:\x1b[0m ');
 
   // Graceful exit saat Ctrl+C
   rl.on('close', () => {
@@ -158,6 +208,9 @@ async function main() {
   } else {
     console.log(`\x1b[32m✅ Terhubung ke:\x1b[0m \x1b[90m${cfg.serverUrl}\x1b[0m\n`);
   }
+
+  // Mulai dengarkan Push Notification dari Server
+  connectStream(cfg, rl);
 
   // ── Loop Obrolan ─────────────────────────────────────────────
   const ask = () => {
