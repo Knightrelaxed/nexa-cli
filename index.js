@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ============================================================
-// N.E.X.A Universal Cyberpunk CLI Client v2.5 (Pixel-Perfect HUD)
+// N.E.X.A Universal Cyberpunk CLI Client v2.5 (Pixel-Perfect ASCII HUD)
 // Clean, Modern, Minimalist Terminal Interface for Tuan Faqih Hidayatulloh
 //
 // Zero external dependencies — 100% standard Node.js & ANSI codes.
@@ -37,46 +37,41 @@ const C = {
   grey: '\x1b[90m'
 };
 
-const PROMPT_STR = `\n${C.bCyan}❖ TUAN FAQIH${C.grey} ──❯${C.reset} `;
+const PROMPT_STR = `${C.bCyan}❖ TUAN FAQIH${C.grey} ──❯${C.reset} `;
 
 // Strip ANSI codes for exact character width calculation
 function stripAnsi(str) {
   return str.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
-// ── Dynamic Pixel-Perfect Box Drawer ───────────────────────────
+// ── Pure ASCII Pixel-Perfect Box Drawer ──────────────────────────
 function drawBox(lines, borderColor = C.cyan) {
-  // Calculate max width considering emoji character display
-  const visibleLengths = lines.map(l => {
-    const clean = stripAnsi(l);
-    // Replace wide emojis with 2 chars for accurate display width
-    const wideStr = clean.replace(/[\u{1F300}-\u{1F9FF}]/gu, '  ');
-    return wideStr.length;
-  });
-  const maxLen = Math.max(...visibleLengths, 54);
+  const visibleLengths = lines.map(l => stripAnsi(l).length);
+  const maxLen = Math.max(...visibleLengths, 52);
 
   const top = `${borderColor}┌${'─'.repeat(maxLen + 4)}┐${C.reset}`;
   const bottom = `${borderColor}└${'─'.repeat(maxLen + 4)}┘${C.reset}`;
   
   const content = lines.map(line => {
-    const clean = stripAnsi(line);
-    const wideStr = clean.replace(/[\u{1F300}-\u{1F9FF}]/gu, '  ');
-    const visLen = wideStr.length;
+    const visLen = stripAnsi(line).length;
     const padRight = ' '.repeat(Math.max(0, maxLen - visLen));
     return `${borderColor}│${C.reset}  ${line}${padRight}  ${borderColor}│${C.reset}`;
   }).join('\n');
 
-  return `\n${top}\n${content}\n${bottom}\n`;
+  return `\n${top}\n${content}\n${bottom}`;
 }
 
-function renderBanner(serverUrl = 'Connecting...') {
-  return drawBox([
+function renderBanner(serverUrl = 'http://127.0.0.1:3000') {
+  const boxContent = [
     `${C.bWhite}N.E.X.A${C.reset}  ${C.grey}│${C.reset}  ${C.bCyan}UNIVERSAL TERMINAL INTERFACE v2.5${C.reset}`,
-    `${C.grey}──────────────────────────────────────────────────────${C.reset}`,
-    `${C.bGreen}● PROTOCOL:${C.reset} HTTP/SSE STREAM   ${C.grey}│${C.reset}  ${C.bGreen}● AUTH:${C.reset} AES-CLI-SEC`,
-    `${C.bGreen}● SERVER  :${C.reset} ${C.white}${serverUrl}${C.reset}`,
-    `${C.grey}Ketik ${C.bWhite}"exit"${C.grey} atau ${C.bWhite}"keluar"${C.grey} untuk menutup terminal${C.reset}`
-  ], C.cyan);
+    `${C.bGreen}+ PROT:${C.reset} HTTP/SSE STREAM   ${C.grey}│${C.reset}  ${C.bGreen}+ AUTH:${C.reset} AES-CLI-SEC`,
+    `${C.bGreen}+ SERVER:${C.reset} ${C.white}${serverUrl}${C.reset}`
+  ];
+
+  const boxStr = drawBox(boxContent, C.cyan);
+  const footerStr = ` ${C.grey}Ketik ${C.bWhite}"exit"${C.grey} atau ${C.bWhite}"keluar"${C.grey} untuk menutup terminal.${C.reset}\n`;
+
+  return boxStr + '\n' + footerStr;
 }
 
 function loadConfig() {
