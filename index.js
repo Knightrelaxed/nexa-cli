@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ============================================================
-// N.E.X.A Universal Ultra-Minimalist CLI Client v2.5
-// Clean, Zero-Border Executive Interface for Tuan Faqih Hidayatulloh
+// N.E.X.A Universal Modern CLI Client v2.5
+// Clean, Minimalist Accent-Bar Interface for Tuan Faqih Hidayatulloh
 //
 // Zero external dependencies — 100% standard Node.js & ANSI codes.
 // ============================================================
@@ -39,28 +39,31 @@ const C = {
 
 const PROMPT_STR = `\n${C.bCyan}❖ TUAN FAQIH${C.grey} ──❯${C.reset} `;
 
-// Strip HTML tags (<br>, <b>, <i>, etc.) for clean CLI printing
-function cleanHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/?b>/gi, '')
-    .replace(/<\/?i>/gi, '')
-    .replace(/<\/?code>/gi, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .trim();
+// Strip ANSI codes for length calculation
+function stripAnsi(str) {
+  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
 }
 
-// ── Ultra-Minimalist Banner ───────────────────────────────────
+// ── Top Header Banner Drawer ───────────────────────────────────
 function renderBanner(serverUrl = 'http://127.0.0.1:3000') {
-  return `
-${C.bCyan}❖ N.E.X.A  ${C.grey}│${C.reset}  ${C.bWhite}UNIVERSAL TERMINAL CLI v2.5${C.reset}
-${C.grey}────────────────────────────────────────────────────────────────${C.reset}
-${C.bGreen}● SERVER:${C.reset} ${C.white}${serverUrl}${C.reset}   ${C.grey}│${C.reset}   ${C.bGreen}● STREAM:${C.reset} SSE REALTIME PUSH
-${C.grey}Ketik ${C.bWhite}"exit"${C.grey} atau ${C.bWhite}"keluar"${C.grey} untuk menutup terminal.${C.reset}
-`;
+  const line1 = `${C.bWhite}N.E.X.A${C.reset}  ${C.grey}│${C.reset}  ${C.bCyan}UNIVERSAL TERMINAL INTERFACE v2.5${C.reset}`;
+  const line2 = `${C.bGreen}+ PROT:${C.reset} HTTP/SSE STREAM   ${C.grey}│${C.reset}  ${C.bGreen}+ AUTH:${C.reset} AES-CLI-SEC`;
+  const line3 = `${C.bGreen}+ SERVER:${C.reset} ${C.white}${serverUrl}${C.reset}`;
+
+  const lines = [line1, line2, line3];
+  const maxLen = Math.max(...lines.map(l => stripAnsi(l).length), 50);
+
+  const top = `${C.cyan}┌${'─'.repeat(maxLen + 4)}┐${C.reset}`;
+  const bottom = `${C.cyan}└${'─'.repeat(maxLen + 4)}┘${C.reset}`;
+
+  const content = lines.map(line => {
+    const padRight = ' '.repeat(Math.max(0, maxLen - stripAnsi(line).length));
+    return `${C.cyan}│${C.reset}  ${line}${padRight}  ${C.cyan}│${C.reset}`;
+  }).join('\n');
+
+  const footer = ` ${C.grey}Ketik ${C.bWhite}"exit"${C.grey} atau ${C.bWhite}"keluar"${C.grey} untuk menutup terminal.${C.reset}\n`;
+
+  return `\n${top}\n${content}\n${bottom}\n\n${footer}`;
 }
 
 function loadConfig() {
@@ -78,22 +81,31 @@ function saveConfig(cfg) {
   fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), 'utf8');
 }
 
-// ── Minimalist Reply Formatter (Zero Box Lines) ────────────────
+// ── UI Framing Helpers (Minimalist Left Accent Bar) ─────────────
 function formatReplyBox(reply, elapsed, intent) {
-  const cleanReply = cleanHtml(reply);
+  // Clean raw HTML <br> tags from response string
+  const cleanReply = String(reply).replace(/<br\s*\/?>/gi, '\n').trim();
+  const border = `${C.cyan}│${C.reset}`;
+  const lines = cleanReply.split('\n');
+  const framedLines = lines.map(line => line.trim() ? `${border}  ${C.white}${line}${C.reset}` : `${border}`).join('\n');
 
   return `
-${C.bCyan}🤖 N.E.X.A${C.reset}  ${C.grey}(${elapsed}ms · ${intent})${C.reset}
-${C.white}${cleanReply}${C.reset}
+${C.bWhite}🤖 N.E.X.A${C.reset}  ${C.grey}•${C.reset}  ${C.cyan}${elapsed}ms${C.reset}  ${C.grey}•${C.reset}  ${C.bGreen}${intent}${C.reset}
+
+${framedLines}
 `;
 }
 
 function formatPushBox(message) {
-  const cleanMessage = cleanHtml(message);
+  const cleanMessage = String(message).replace(/<br\s*\/?>/gi, '\n').trim();
+  const border = `${C.bMagenta}│${C.reset}`;
+  const lines = cleanMessage.split('\n');
+  const framedLines = lines.map(line => line.trim() ? `${border}  ${C.white}${line}${C.reset}` : `${border}`).join('\n');
 
   return `
-${C.bMagenta}🔔 N.E.X.A PUSH NOTIFICATION${C.reset}
-${C.white}${cleanMessage}${C.reset}
+${C.bMagenta}🔔 N.E.X.A PROACTIVE PUSH BROADCAST${C.reset}
+
+${framedLines}
 `;
 }
 
