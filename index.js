@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ============================================================
-// N.E.X.A Universal Cyberpunk CLI Client v2.5
-// High-Tech Futuristic HUD Interface for Tuan Faqih Hidayatulloh
+// N.E.X.A Universal Cyberpunk CLI Client v2.5 (Pixel-Perfect HUD)
+// Clean, Modern, Minimalist Terminal Interface for Tuan Faqih Hidayatulloh
 //
 // Zero external dependencies — 100% standard Node.js & ANSI codes.
 // ============================================================
@@ -14,12 +14,12 @@ const fs       = require('fs');
 const path     = require('path');
 const os       = require('os');
 
-// ── Konstanta & Config ─────────────────────────────────────────
+// ── Config ─────────────────────────────────────────────────────
 const CONFIG_PATH = path.join(os.homedir(), '.nexa-config.json');
 const SESSION_ID  = `cli-${Date.now()}`;
 const TIMEOUT_MS  = 60000;
 
-// ANSI Colors & Design System
+// ANSI Design System
 const C = {
   reset: '\x1b[0m',
   bold: '\x1b[1m',
@@ -37,16 +37,47 @@ const C = {
   grey: '\x1b[90m'
 };
 
-const PROMPT_STR = `${C.bCyan}❖ TUAN FAQIH${C.grey} ──❯${C.reset} `;
+const PROMPT_STR = `\n${C.bCyan}❖ TUAN FAQIH${C.grey} ──❯${C.reset} `;
 
-const BANNER = `
-${C.bCyan}┌─────────────────────────────────────────────────────────────┐${C.reset}
-${C.bCyan}│${C.reset}  ${C.bWhite}🤖 N.E.X.A  ${C.grey}│${C.reset}  ${C.bCyan}UNIVERSAL TERMINAL INTERFACE v2.5${C.reset}           ${C.bCyan}│${C.reset}
-${C.bCyan}│${C.reset}  ${C.grey}──────────────────────────────────────────${C.reset}                 ${C.bCyan}│${C.reset}
-${C.bCyan}│${C.reset}  ${C.bGreen}● PROT:${C.reset} HTTP/SSE STREAM   ${C.grey}│${C.reset}  ${C.bGreen}● AUTH:${C.reset} AES-CLI-SEC       ${C.bCyan}│${C.reset}
-${C.bCyan}│${C.reset}  ${C.grey}Ketik ${C.bWhite}"exit"${C.grey} atau ${C.bWhite}"keluar"${C.grey} untuk menutup terminal${C.reset}       ${C.bCyan}│${C.reset}
-${C.bCyan}└─────────────────────────────────────────────────────────────┘${C.reset}
-`;
+// Strip ANSI codes for exact character width calculation
+function stripAnsi(str) {
+  return str.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
+// ── Dynamic Pixel-Perfect Box Drawer ───────────────────────────
+function drawBox(lines, borderColor = C.cyan) {
+  // Calculate max width considering emoji character display
+  const visibleLengths = lines.map(l => {
+    const clean = stripAnsi(l);
+    // Replace wide emojis with 2 chars for accurate display width
+    const wideStr = clean.replace(/[\u{1F300}-\u{1F9FF}]/gu, '  ');
+    return wideStr.length;
+  });
+  const maxLen = Math.max(...visibleLengths, 54);
+
+  const top = `${borderColor}┌${'─'.repeat(maxLen + 4)}┐${C.reset}`;
+  const bottom = `${borderColor}└${'─'.repeat(maxLen + 4)}┘${C.reset}`;
+  
+  const content = lines.map(line => {
+    const clean = stripAnsi(line);
+    const wideStr = clean.replace(/[\u{1F300}-\u{1F9FF}]/gu, '  ');
+    const visLen = wideStr.length;
+    const padRight = ' '.repeat(Math.max(0, maxLen - visLen));
+    return `${borderColor}│${C.reset}  ${line}${padRight}  ${borderColor}│${C.reset}`;
+  }).join('\n');
+
+  return `\n${top}\n${content}\n${bottom}\n`;
+}
+
+function renderBanner(serverUrl = 'Connecting...') {
+  return drawBox([
+    `${C.bWhite}N.E.X.A${C.reset}  ${C.grey}│${C.reset}  ${C.bCyan}UNIVERSAL TERMINAL INTERFACE v2.5${C.reset}`,
+    `${C.grey}──────────────────────────────────────────────────────${C.reset}`,
+    `${C.bGreen}● PROTOCOL:${C.reset} HTTP/SSE STREAM   ${C.grey}│${C.reset}  ${C.bGreen}● AUTH:${C.reset} AES-CLI-SEC`,
+    `${C.bGreen}● SERVER  :${C.reset} ${C.white}${serverUrl}${C.reset}`,
+    `${C.grey}Ketik ${C.bWhite}"exit"${C.grey} atau ${C.bWhite}"keluar"${C.grey} untuk menutup terminal${C.reset}`
+  ], C.cyan);
+}
 
 function loadConfig() {
   try {
@@ -70,26 +101,25 @@ function formatReplyBox(reply, elapsed, intent) {
   const framedLines = lines.map(line => `${border}  ${C.white}${line}${C.reset}`).join('\n');
 
   return `
-${C.bCyan}┌───${C.reset} ${C.bWhite}🤖 N.E.X.A${C.reset}  ${C.grey}[ ⚡ ${elapsed}ms │ 🎯 ${intent} ]${C.reset} ${C.cyan}────────────────────${C.reset}
+${C.bCyan}┌───${C.reset} ${C.bWhite}🤖 N.E.X.A${C.reset}  ${C.grey}[ ⚡ ${elapsed}ms │ 🎯 ${intent} ]${C.reset} ${C.cyan}─────────────────────────────${C.reset}
 ${border}
 ${framedLines}
 ${border}
-${C.cyan}└───────────────────────────────────────────────────────────────${C.reset}
+${C.cyan}└─────────────────────────────────────────────────────────────────────────────${C.reset}
 `;
 }
 
 function formatPushBox(message) {
+  const border = `${C.bMagenta}│${C.reset}`;
   const lines = message.split('\n');
-  const framedLines = lines.map(line => `${C.magenta}│${C.reset}  ${C.white}${line}${C.reset}`).join('\n');
+  const framedLines = lines.map(line => `${border}  ${C.white}${line}${C.reset}`).join('\n');
 
   return `
-${C.bMagenta}╔═══════════════════════════════════════════════════════════════╗${C.reset}
-${C.bMagenta}║${C.reset}  ${C.bWhite}🔔 N.E.X.A PROACTIVE PUSH BROADCAST${C.reset}                          ${C.bMagenta}║${C.reset}
-${C.bMagenta}╠═══════════════════════════════════════════════════════════════╣${C.reset}
-${C.magenta}│${C.reset}
+${C.bMagenta}┌─── 🔔 N.E.X.A PROACTIVE PUSH BROADCAST ────────────────────────────────────${C.reset}
+${border}
 ${framedLines}
-${C.magenta}│${C.reset}
-${C.bMagenta}╚═══════════════════════════════════════════════════════════════╝${C.reset}
+${border}
+${C.bMagenta}└─────────────────────────────────────────────────────────────────────────────${C.reset}
 `;
 }
 
@@ -103,7 +133,7 @@ function createSpinner() {
     start() {
       process.stdout.write('\x1b[?25l'); // Hide cursor
       timer = setInterval(() => {
-        process.stdout.write(`\r${C.cyan}${frames[i]} ${C.bYellow}N.E.X.A sedang berpikir...${C.reset}\x1b[K`);
+        process.stdout.write(`\r${C.cyan}${frames[i]}${C.reset} ${C.bYellow}N.E.X.A sedang berpikir...${C.reset}\x1b[K`);
         i = (i + 1) % frames.length;
       }, 80);
     },
@@ -249,8 +279,6 @@ async function setupConfig(rl) {
 
 // ── Main Entry Point ───────────────────────────────────────────
 async function main() {
-  console.log(BANNER);
-
   const rl = readline.createInterface({
     input : process.stdin,
     output: process.stdout
@@ -265,10 +293,9 @@ async function main() {
   let cfg = loadConfig();
   if (!cfg) {
     cfg = await setupConfig(rl);
-  } else {
-    console.log(`${C.bGreen}● SYSTEM STATUS:${C.reset} ${C.white}ONLINE${C.reset} ${C.grey}│${C.reset} ${C.cyan}SERVER:${C.reset} ${C.grey}${cfg.serverUrl}${C.reset}\n`);
   }
 
+  console.log(renderBanner(cfg ? cfg.serverUrl : 'http://127.0.0.1:3000'));
   connectStream(cfg, rl);
 
   const ask = () => {
@@ -295,10 +322,10 @@ async function main() {
         spinner.stop();
 
         if (result.status === 401 || result.status === 403) {
-          console.log(`\x1b[31m❌ Autentikasi gagal. Periksa Secret Key Anda.\x1b[0m\n`);
+          console.log(`\n\x1b[31m❌ Autentikasi gagal. Periksa Secret Key Anda.\x1b[0m\n`);
         } else if (!result.body?.ok) {
           const errMsg = result.body?.error || `HTTP ${result.status}`;
-          console.log(`\x1b[31m❌ Error dari server: ${errMsg}\x1b[0m\n`);
+          console.log(`\n\x1b[31m❌ Error dari server: ${errMsg}\x1b[0m\n`);
         } else {
           const reply  = result.body.reply  || '(tidak ada balasan)';
           const intent = result.body.intent || 'UNKNOWN';
@@ -308,9 +335,9 @@ async function main() {
       } catch (err) {
         spinner.stop();
         if (err.message.includes('timeout')) {
-          console.log(`\x1b[31m⏱️  Timeout — server N.E.X.A tidak merespons dalam 60 detik.\x1b[0m\n`);
+          console.log(`\n\x1b[31m⏱️  Timeout — server N.E.X.A tidak merespons dalam 60 detik.\x1b[0m\n`);
         } else {
-          console.log(`\x1b[31m❌ Koneksi gagal: ${err.message}\x1b[0m\n`);
+          console.log(`\n\x1b[31m❌ Koneksi gagal: ${err.message}\x1b[0m\n`);
         }
       }
 
