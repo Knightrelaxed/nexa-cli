@@ -1,17 +1,9 @@
 #!/usr/bin/env node
 // ============================================================
-// N.E.X.A Universal CLI Client
-// Menghubungkan terminal laptop manapun ke server N.E.X.A di HF.
+// N.E.X.A Universal Cyberpunk CLI Client v2.5
+// High-Tech Futuristic HUD Interface for Tuan Faqih Hidayatulloh
 //
-// Cara pakai:
-//   npx github:Knightrelaxed/nexa-cli
-//
-// Cara kerja:
-//   1. Baca config dari ~/.nexa-config.json
-//   2. Jika belum ada → tanya URL server & secret sekali saja
-//   3. Loop obrolan: ketik pesan → HTTPS POST /webhook/cli → tampilkan balasan
-//
-// Zero external dependencies — hanya menggunakan Node.js built-in modules.
+// Zero external dependencies — 100% standard Node.js & ANSI codes.
 // ============================================================
 'use strict';
 
@@ -22,18 +14,40 @@ const fs       = require('fs');
 const path     = require('path');
 const os       = require('os');
 
-// ── Konstanta ─────────────────────────────────────────────────
-const CONFIG_PATH  = path.join(os.homedir(), '.nexa-config.json');
-const SESSION_ID   = `cli-${Date.now()}`;    // Unik per sesi obrolan
-const TIMEOUT_MS   = 60000;                   // 60 detik timeout (model AI bisa lambat)
+// ── Konstanta & Config ─────────────────────────────────────────
+const CONFIG_PATH = path.join(os.homedir(), '.nexa-config.json');
+const SESSION_ID  = `cli-${Date.now()}`;
+const TIMEOUT_MS  = 60000;
+
+// ANSI Colors & Design System
+const C = {
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
+  cyan: '\x1b[36m',
+  bCyan: '\x1b[1;\x1b[36m',
+  magenta: '\x1b[35m',
+  bMagenta: '\x1b[1;\x1b[35m',
+  green: '\x1b[32m',
+  bGreen: '\x1b[1;\x1b[32m',
+  yellow: '\x1b[33m',
+  bYellow: '\x1b[1;\x1b[33m',
+  white: '\x1b[97m',
+  bWhite: '\x1b[1;\x1b[97m',
+  grey: '\x1b[90m'
+};
+
+const PROMPT_STR = `${C.bCyan}❖ TUAN FAQIH${C.grey} ──❯${C.reset} `;
+
 const BANNER = `
-\x1b[36m╔══════════════════════════════════════════════════╗\x1b[0m
-\x1b[36m║\x1b[0m   \x1b[1m\x1b[97m🤖  N.E.X.A — Universal Terminal CLI\x1b[0m            \x1b[36m║\x1b[0m
-\x1b[36m║\x1b[0m   \x1b[90mKetik "exit" atau "keluar" untuk berhenti\x1b[0m       \x1b[36m║\x1b[0m
-\x1b[36m╚══════════════════════════════════════════════════╝\x1b[0m
+${C.bCyan}┌─────────────────────────────────────────────────────────────┐${C.reset}
+${C.bCyan}│${C.reset}  ${C.bWhite}🤖 N.E.X.A  ${C.grey}│${C.reset}  ${C.bCyan}UNIVERSAL TERMINAL INTERFACE v2.5${C.reset}           ${C.bCyan}│${C.reset}
+${C.bCyan}│${C.reset}  ${C.grey}──────────────────────────────────────────${C.reset}                 ${C.bCyan}│${C.reset}
+${C.bCyan}│${C.reset}  ${C.bGreen}● PROT:${C.reset} HTTP/SSE STREAM   ${C.grey}│${C.reset}  ${C.bGreen}● AUTH:${C.reset} AES-CLI-SEC       ${C.bCyan}│${C.reset}
+${C.bCyan}│${C.reset}  ${C.grey}Ketik ${C.bWhite}"exit"${C.grey} atau ${C.bWhite}"keluar"${C.grey} untuk menutup terminal${C.reset}       ${C.bCyan}│${C.reset}
+${C.bCyan}└─────────────────────────────────────────────────────────────┘${C.reset}
 `;
 
-// ── Baca atau Buat Konfigurasi ─────────────────────────────────
 function loadConfig() {
   try {
     if (fs.existsSync(CONFIG_PATH)) {
@@ -49,7 +63,59 @@ function saveConfig(cfg) {
   fs.writeFileSync(CONFIG_PATH, JSON.stringify(cfg, null, 2), 'utf8');
 }
 
-// ── HTTP Request Helper (tanpa external dependency) ────────────
+// ── UI Framing Helpers ──────────────────────────────────────────
+function formatReplyBox(reply, elapsed, intent) {
+  const border = `${C.cyan}│${C.reset}`;
+  const lines = reply.split('\n');
+  const framedLines = lines.map(line => `${border}  ${C.white}${line}${C.reset}`).join('\n');
+
+  return `
+${C.bCyan}┌───${C.reset} ${C.bWhite}🤖 N.E.X.A${C.reset}  ${C.grey}[ ⚡ ${elapsed}ms │ 🎯 ${intent} ]${C.reset} ${C.cyan}────────────────────${C.reset}
+${border}
+${framedLines}
+${border}
+${C.cyan}└───────────────────────────────────────────────────────────────${C.reset}
+`;
+}
+
+function formatPushBox(message) {
+  const lines = message.split('\n');
+  const framedLines = lines.map(line => `${C.magenta}│${C.reset}  ${C.white}${line}${C.reset}`).join('\n');
+
+  return `
+${C.bMagenta}╔═══════════════════════════════════════════════════════════════╗${C.reset}
+${C.bMagenta}║${C.reset}  ${C.bWhite}🔔 N.E.X.A PROACTIVE PUSH BROADCAST${C.reset}                          ${C.bMagenta}║${C.reset}
+${C.bMagenta}╠═══════════════════════════════════════════════════════════════╣${C.reset}
+${C.magenta}│${C.reset}
+${framedLines}
+${C.magenta}│${C.reset}
+${C.bMagenta}╚═══════════════════════════════════════════════════════════════╝${C.reset}
+`;
+}
+
+// Spinner Animation Helper
+function createSpinner() {
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  let i = 0;
+  let timer = null;
+
+  return {
+    start() {
+      process.stdout.write('\x1b[?25l'); // Hide cursor
+      timer = setInterval(() => {
+        process.stdout.write(`\r${C.cyan}${frames[i]} ${C.bYellow}N.E.X.A sedang berpikir...${C.reset}\x1b[K`);
+        i = (i + 1) % frames.length;
+      }, 80);
+    },
+    stop() {
+      if (timer) clearInterval(timer);
+      process.stdout.write('\r\x1b[2K'); // Clear spinner line
+      process.stdout.write('\x1b[?25h'); // Show cursor
+    }
+  };
+}
+
+// ── HTTP Request Helper ─────────────────────────────────────────
 function postJson(serverUrl, secret, body) {
   return new Promise((resolve, reject) => {
     const payload   = JSON.stringify(body);
@@ -94,48 +160,6 @@ function postJson(serverUrl, secret, body) {
   });
 }
 
-// ── Setup Konfigurasi Pertama Kali ─────────────────────────────
-async function setupConfig(rl) {
-  const question = (prompt) => new Promise(resolve => rl.question(prompt, resolve));
-
-  console.log('\n\x1b[33m⚙️  Konfigurasi belum ditemukan. Setup sekali ini saja.\x1b[0m\n');
-
-  let serverUrl = (await question('\x1b[36m🔐 NEXA Server URL\x1b[0m  (contoh: https://nexa-asistant-nexa-core-server.hf.space)\n   → ')).trim();
-  if (!serverUrl.startsWith('http')) serverUrl = 'https://' + serverUrl;
-  // Hapus trailing slash
-  serverUrl = serverUrl.replace(/\/$/, '');
-
-  const secret = (await question('\x1b[36m🔐 Secret Key\x1b[0m        (NEXA_GODMODE_SECRET Anda)\n   → ')).trim();
-
-  if (!serverUrl || !secret) {
-    console.error('\n\x1b[31m❌ URL dan Secret tidak boleh kosong.\x1b[0m');
-    process.exit(1);
-  }
-
-  // Verifikasi koneksi sebelum menyimpan
-  process.stdout.write('\n\x1b[33m🔄 Memverifikasi koneksi ke server N.E.X.A...\x1b[0m ');
-  try {
-    const result = await postJson(serverUrl, secret, { message: '__ping__', session_id: 'setup-test' });
-    if (result.status === 401 || result.status === 403) {
-      console.log('\x1b[31mGAGAL\x1b[0m');
-      console.error('\x1b[31m❌ Secret Key salah. Silakan coba lagi.\x1b[0m');
-      process.exit(1);
-    }
-    console.log('\x1b[32mOK\x1b[0m');
-  } catch (err) {
-    console.log('\x1b[31mGAGAL\x1b[0m');
-    console.error(`\x1b[31m❌ Tidak dapat terhubung ke server: ${err.message}\x1b[0m`);
-    console.error('\x1b[90mPastikan Server URL benar dan HF Space sedang online.\x1b[0m');
-    process.exit(1);
-  }
-
-  const cfg = { serverUrl, secret };
-  saveConfig(cfg);
-  console.log(`\n\x1b[32m✅ Konfigurasi tersimpan di ${CONFIG_PATH}\x1b[0m`);
-  console.log('\x1b[90m   (Tidak perlu input ulang di laptop ini)\x1b[0m\n');
-  return cfg;
-}
-
 // ── SSE Stream Listener ─────────────────────────────────────────
 function connectStream(cfg, rl) {
   const url = new URL('/webhook/cli/stream', cfg.serverUrl);
@@ -152,7 +176,7 @@ function connectStream(cfg, rl) {
   };
 
   const req = transport.request(options, (res) => {
-    if (res.statusCode === 401 || res.statusCode === 403) return; // Stop if unauthorized
+    if (res.statusCode === 401 || res.statusCode === 403) return;
     
     res.setEncoding('utf8');
     let buffer = '';
@@ -170,8 +194,8 @@ function connectStream(cfg, rl) {
             const parsed = JSON.parse(dataStr);
             if (parsed.type === 'notification') {
               process.stdout.write('\x1b[2K\r'); 
-              console.log(`\n\x1b[35m🔔 [N.E.X.A PUSH]\x1b[0m:\n\x1b[97m${parsed.message}\x1b[0m\n`);
-              rl.prompt(true); // Memunculkan kembali prompt input beserta teks yang sedang diketik
+              console.log(formatPushBox(parsed.message));
+              rl.prompt(true);
             }
           } catch (e) { }
         }
@@ -185,6 +209,44 @@ function connectStream(cfg, rl) {
   req.end();
 }
 
+// ── Setup Konfigurasi ──────────────────────────────────────────
+async function setupConfig(rl) {
+  const question = (prompt) => new Promise(resolve => rl.question(prompt, resolve));
+
+  console.log(`\n${C.bYellow}⚙️  Konfigurasi belum ditemukan. Setup sekali ini saja.${C.reset}\n`);
+
+  let serverUrl = (await question(`${C.bCyan}🔐 NEXA Server URL${C.reset}  (contoh: http://127.0.0.1:3000)\n   → `)).trim();
+  if (!serverUrl.startsWith('http')) serverUrl = 'https://' + serverUrl;
+  serverUrl = serverUrl.replace(/\/$/, '');
+
+  const secret = (await question(`${C.bCyan}🔐 Secret Key${C.reset}        (NEXA_CLI_SECRET Anda)\n   → `)).trim();
+
+  if (!serverUrl || !secret) {
+    console.error(`\n${C.bYellow}❌ URL dan Secret tidak boleh kosong.${C.reset}`);
+    process.exit(1);
+  }
+
+  process.stdout.write(`\n${C.yellow}🔄 Memverifikasi koneksi ke server N.E.X.A...${C.reset} `);
+  try {
+    const result = await postJson(serverUrl, secret, { message: '__ping__', session_id: 'setup-test' });
+    if (result.status === 401 || result.status === 403) {
+      console.log(`${C.bYellow}GAGAL${C.reset}`);
+      console.error(`${C.bYellow}❌ Secret Key salah. Silakan coba lagi.${C.reset}`);
+      process.exit(1);
+    }
+    console.log(`${C.bGreen}OK${C.reset}`);
+  } catch (err) {
+    console.log(`${C.bYellow}GAGAL${C.reset}`);
+    console.error(`${C.bYellow}❌ Tidak dapat terhubung ke server: ${err.message}${C.reset}`);
+    process.exit(1);
+  }
+
+  const cfg = { serverUrl, secret };
+  saveConfig(cfg);
+  console.log(`\n${C.bGreen}✅ Konfigurasi tersimpan di ${CONFIG_PATH}${C.reset}\n`);
+  return cfg;
+}
+
 // ── Main Entry Point ───────────────────────────────────────────
 async function main() {
   console.log(BANNER);
@@ -193,39 +255,35 @@ async function main() {
     input : process.stdin,
     output: process.stdout
   });
-  rl.setPrompt('\x1b[97m👤 Tuan Faqih:\x1b[0m ');
+  rl.setPrompt(PROMPT_STR);
 
-  // Graceful exit saat Ctrl+C
   rl.on('close', () => {
-    console.log('\n\x1b[36m👋 N.E.X.A: Sampai jumpa, Tuan Faqih! Semangat terus!\x1b[0m\n');
+    console.log(`\n${C.bCyan}👋 N.E.X.A: Terima kasih Tuan Faqih. Terminal offline.${C.reset}\n`);
     process.exit(0);
   });
 
-  // Load atau setup konfigurasi
   let cfg = loadConfig();
   if (!cfg) {
     cfg = await setupConfig(rl);
   } else {
-    console.log(`\x1b[32m✅ Terhubung ke:\x1b[0m \x1b[90m${cfg.serverUrl}\x1b[0m\n`);
+    console.log(`${C.bGreen}● SYSTEM STATUS:${C.reset} ${C.white}ONLINE${C.reset} ${C.grey}│${C.reset} ${C.cyan}SERVER:${C.reset} ${C.grey}${cfg.serverUrl}${C.reset}\n`);
   }
 
-  // Mulai dengarkan Push Notification dari Server
   connectStream(cfg, rl);
 
-  // ── Loop Obrolan ─────────────────────────────────────────────
   const ask = () => {
-    rl.question('\x1b[97m👤 Tuan Faqih:\x1b[0m ', async (userInput) => {
+    rl.question(PROMPT_STR, async (userInput) => {
       const input = userInput.trim();
 
-      // Perintah keluar
       if (!input) { ask(); return; }
       if (['exit', 'keluar', 'q', 'quit'].includes(input.toLowerCase())) {
         rl.close();
         return;
       }
 
+      const spinner = createSpinner();
       const startTime = Date.now();
-      process.stdout.write('\x1b[33m⏳ N.E.X.A sedang berpikir...\x1b[0m\r');
+      spinner.start();
 
       try {
         const result = await postJson(cfg.serverUrl, cfg.secret, {
@@ -234,28 +292,23 @@ async function main() {
         });
 
         const elapsed = Date.now() - startTime;
-
-        // Bersihkan baris "sedang berpikir..."
-        process.stdout.write('\x1b[2K\r');
+        spinner.stop();
 
         if (result.status === 401 || result.status === 403) {
-          console.log('\x1b[31m❌ Autentikasi gagal. Periksa Secret Key Anda.\x1b[0m');
-          console.log('\x1b[90m   Hapus ~/.nexa-config.json lalu jalankan ulang untuk setup ulang.\x1b[0m\n');
+          console.log(`\x1b[31m❌ Autentikasi gagal. Periksa Secret Key Anda.\x1b[0m\n`);
         } else if (!result.body?.ok) {
           const errMsg = result.body?.error || `HTTP ${result.status}`;
           console.log(`\x1b[31m❌ Error dari server: ${errMsg}\x1b[0m\n`);
         } else {
           const reply  = result.body.reply  || '(tidak ada balasan)';
           const intent = result.body.intent || 'UNKNOWN';
-          console.log(`\n\x1b[36m🤖 N.E.X.A\x1b[0m \x1b[90m(${elapsed}ms · ${intent})\x1b[0m:`);
-          console.log(`\x1b[97m${reply}\x1b[0m\n`);
+          console.log(formatReplyBox(reply, elapsed, intent));
         }
 
       } catch (err) {
-        process.stdout.write('\x1b[2K\r');
+        spinner.stop();
         if (err.message.includes('timeout')) {
-          console.log('\x1b[31m⏱️  Timeout — server N.E.X.A tidak merespons dalam 60 detik.\x1b[0m');
-          console.log('\x1b[90m   HF Space mungkin sedang sleep atau down.\x1b[0m\n');
+          console.log(`\x1b[31m⏱️  Timeout — server N.E.X.A tidak merespons dalam 60 detik.\x1b[0m\n`);
         } else {
           console.log(`\x1b[31m❌ Koneksi gagal: ${err.message}\x1b[0m\n`);
         }
