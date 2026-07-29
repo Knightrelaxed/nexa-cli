@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // ============================================================
-// N.E.X.A Universal Cyberpunk CLI Client v2.5 (Pixel-Perfect ASCII HUD)
+// N.E.X.A Universal Cyberpunk CLI Client v2.5 (Pixel-Perfect HUD)
 // Clean, Modern, Minimalist Terminal Interface for Tuan Faqih Hidayatulloh
 //
 // Zero external dependencies — 100% standard Node.js & ANSI codes.
@@ -19,35 +19,35 @@ const CONFIG_PATH = path.join(os.homedir(), '.nexa-config.json');
 const SESSION_ID  = `cli-${Date.now()}`;
 const TIMEOUT_MS  = 60000;
 
-// ANSI Design System
+// ANSI Design System (Proper single-sequence codes)
 const C = {
   reset: '\x1b[0m',
   bold: '\x1b[1m',
   dim: '\x1b[2m',
   cyan: '\x1b[36m',
-  bCyan: '\x1b[1;\x1b[36m',
+  bCyan: '\x1b[1;36m',
   magenta: '\x1b[35m',
-  bMagenta: '\x1b[1;\x1b[35m',
+  bMagenta: '\x1b[1;35m',
   green: '\x1b[32m',
-  bGreen: '\x1b[1;\x1b[32m',
+  bGreen: '\x1b[1;32m',
   yellow: '\x1b[33m',
-  bYellow: '\x1b[1;\x1b[33m',
+  bYellow: '\x1b[1;33m',
   white: '\x1b[97m',
-  bWhite: '\x1b[1;\x1b[97m',
+  bWhite: '\x1b[1;97m',
   grey: '\x1b[90m'
 };
 
 const PROMPT_STR = `${C.bCyan}❖ TUAN FAQIH${C.grey} ──❯${C.reset} `;
 
-// Strip ANSI codes for exact character width calculation
+// Comprehensive ANSI strip regex
 function stripAnsi(str) {
-  return str.replace(/\x1b\[[0-9;]*m/g, '');
+  return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
 }
 
-// ── Pure ASCII Pixel-Perfect Box Drawer ──────────────────────────
+// ── Pixel-Perfect Dynamic Box Drawer ───────────────────────────
 function drawBox(lines, borderColor = C.cyan) {
   const visibleLengths = lines.map(l => stripAnsi(l).length);
-  const maxLen = Math.max(...visibleLengths, 52);
+  const maxLen = Math.max(...visibleLengths, 50);
 
   const top = `${borderColor}┌${'─'.repeat(maxLen + 4)}┐${C.reset}`;
   const bottom = `${borderColor}└${'─'.repeat(maxLen + 4)}┘${C.reset}`;
@@ -91,8 +91,10 @@ function saveConfig(cfg) {
 
 // ── UI Framing Helpers ──────────────────────────────────────────
 function formatReplyBox(reply, elapsed, intent) {
+  // Clean raw HTML <br> tags from response string
+  const cleanReply = String(reply).replace(/<br\s*\/?>/gi, '\n').trim();
   const border = `${C.cyan}│${C.reset}`;
-  const lines = reply.split('\n');
+  const lines = cleanReply.split('\n');
   const framedLines = lines.map(line => `${border}  ${C.white}${line}${C.reset}`).join('\n');
 
   return `
@@ -105,8 +107,9 @@ ${C.cyan}└──────────────────────�
 }
 
 function formatPushBox(message) {
+  const cleanMessage = String(message).replace(/<br\s*\/?>/gi, '\n').trim();
   const border = `${C.bMagenta}│${C.reset}`;
-  const lines = message.split('\n');
+  const lines = cleanMessage.split('\n');
   const framedLines = lines.map(line => `${border}  ${C.white}${line}${C.reset}`).join('\n');
 
   return `
