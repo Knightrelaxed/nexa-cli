@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ============================================================
-// N.E.X.A Universal Modern CLI Client v2.5
-// Clean, Minimalist Accent-Bar Interface for Tuan Faqih Hidayatulloh
+// N.E.X.A Universal Executive Cyberpunk CLI Client v2.5
+// High-Tech Futuristic HUD Interface for Tuan Faqih Hidayatulloh
 //
 // Zero external dependencies — 100% standard Node.js & ANSI codes.
 // ============================================================
@@ -19,7 +19,7 @@ const CONFIG_PATH = path.join(os.homedir(), '.nexa-config.json');
 const SESSION_ID  = `cli-${Date.now()}`;
 const TIMEOUT_MS  = 60000;
 
-// ANSI Design System
+// ANSI Design System (Proper single-sequence codes)
 const C = {
   reset: '\x1b[0m',
   bold: '\x1b[1m',
@@ -37,33 +37,43 @@ const C = {
   grey: '\x1b[90m'
 };
 
-const PROMPT_STR = `\n${C.bCyan}❖ TUAN FAQIH${C.grey} ──❯${C.reset} `;
+const PROMPT_STR = `${C.bCyan}❖ TUAN FAQIH${C.grey} ──❯${C.reset} `;
 
-// Strip ANSI codes for length calculation
+// Comprehensive ANSI strip regex for exact padding
 function stripAnsi(str) {
   return str.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
 }
 
-// ── Top Header Banner Drawer ───────────────────────────────────
-function renderBanner(serverUrl = 'http://127.0.0.1:3000') {
-  const line1 = `${C.bWhite}N.E.X.A${C.reset}  ${C.grey}│${C.reset}  ${C.bCyan}UNIVERSAL TERMINAL INTERFACE v2.5${C.reset}`;
-  const line2 = `${C.bGreen}+ PROT:${C.reset} HTTP/SSE STREAM   ${C.grey}│${C.reset}  ${C.bGreen}+ AUTH:${C.reset} AES-CLI-SEC`;
-  const line3 = `${C.bGreen}+ SERVER:${C.reset} ${C.white}${serverUrl}${C.reset}`;
+// ── Pixel-Perfect Dynamic Box Drawer ───────────────────────────
+function drawBox(lines, borderColor = C.cyan) {
+  const visibleLengths = lines.map(l => stripAnsi(l).length);
+  const maxLen = Math.max(...visibleLengths, 54);
 
-  const lines = [line1, line2, line3];
-  const maxLen = Math.max(...lines.map(l => stripAnsi(l).length), 50);
-
-  const top = `${C.cyan}┌${'─'.repeat(maxLen + 4)}┐${C.reset}`;
-  const bottom = `${C.cyan}└${'─'.repeat(maxLen + 4)}┘${C.reset}`;
-
+  const top = `${borderColor}┌${'─'.repeat(maxLen + 4)}┐${C.reset}`;
+  const bottom = `${borderColor}└${'─'.repeat(maxLen + 4)}┘${C.reset}`;
+  
   const content = lines.map(line => {
-    const padRight = ' '.repeat(Math.max(0, maxLen - stripAnsi(line).length));
-    return `${C.cyan}│${C.reset}  ${line}${padRight}  ${C.cyan}│${C.reset}`;
+    const visLen = stripAnsi(line).length;
+    const padRight = ' '.repeat(Math.max(0, maxLen - visLen));
+    return `${borderColor}│${C.reset}  ${line}${padRight}  ${borderColor}│${C.reset}`;
   }).join('\n');
 
-  const footer = ` ${C.grey}Ketik ${C.bWhite}"exit"${C.grey} atau ${C.bWhite}"keluar"${C.grey} untuk menutup terminal.${C.reset}\n`;
+  return `\n${top}\n${content}\n${bottom}`;
+}
 
-  return `\n${top}\n${content}\n${bottom}\n\n${footer}`;
+function renderBanner(serverUrl = 'http://127.0.0.1:3000') {
+  const boxContent = [
+    `${C.bWhite}N.E.X.A CORE${C.reset}  ${C.grey}│${C.reset}  ${C.bCyan}UNIVERSAL TERMINAL INTERFACE v2.5${C.reset}`,
+    `${C.grey}──────────────────────────────────────────────────────${C.reset}`,
+    `${C.cyan}STATUS :${C.reset} ${C.bGreen}ONLINE${C.reset}          ${C.cyan}USER :${C.reset} ${C.bWhite}TUAN FAQIH HIDAYATULLOH${C.reset}`,
+    `${C.cyan}STREAM :${C.reset} ${C.bMagenta}REALTIME PUSH${C.reset}   ${C.cyan}AUTH :${C.reset} ${C.bGreen}AES-CLI-SEC (OK)${C.reset}`,
+    `${C.cyan}SERVER :${C.reset} ${C.white}${serverUrl}${C.reset}`
+  ];
+
+  const boxStr = drawBox(boxContent, C.cyan);
+  const footerStr = ` ${C.grey}Ketik ${C.bWhite}"exit"${C.grey} atau ${C.bWhite}"keluar"${C.grey} untuk menutup terminal.${C.reset}\n`;
+
+  return boxStr + '\n' + footerStr;
 }
 
 function loadConfig() {
@@ -83,7 +93,6 @@ function saveConfig(cfg) {
 
 // ── UI Framing Helpers (Minimalist Left Accent Bar) ─────────────
 function formatReplyBox(reply, elapsed, intent) {
-  // Clean raw HTML <br> tags from response string
   const cleanReply = String(reply).replace(/<br\s*\/?>/gi, '\n').trim();
   const border = `${C.cyan}│${C.reset}`;
   const lines = cleanReply.split('\n');
