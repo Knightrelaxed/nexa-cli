@@ -1,0 +1,19 @@
+﻿{
+  "name": "nexa-cli",
+  "version": "1.0.0",
+  "description": "Universal Terminal CLI untuk N.E.X.A AI Assistant — terhubung ke server N.E.X.A dari laptop manapun",
+  "main": "index.js",
+  "bin": {
+    "nexa": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["nexa", "ai", "cli", "assistant"],
+  "author": "Knightrelaxed",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {}
+}
