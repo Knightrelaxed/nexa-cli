@@ -112,14 +112,22 @@ function cleanAndFormatHtml(str) {
 }
 
 // ── UI Framing Helpers (Minimalist Left Accent Bar) ─────────────
-function formatReplyBox(reply, elapsed, intent) {
+function formatReplyBox(reply, elapsed, intent, tokens = null) {
   const cleanReply = cleanAndFormatHtml(reply);
   const border = `${C.cyan}│${C.reset}`;
   const lines = cleanReply.split('\n');
   const framedLines = lines.map(line => line.trim() ? `${border}  ${C.white}${line}${C.reset}` : `${border}`).join('\n');
 
+  let tokenStr = '';
+  if (tokens && typeof tokens.total_tokens === 'number' && tokens.total_tokens > 0) {
+    const totTok = tokens.total_tokens.toLocaleString('id-ID');
+    const inTok = (tokens.input_tokens || 0).toLocaleString('id-ID');
+    const outTok = (tokens.output_tokens || 0).toLocaleString('id-ID');
+    tokenStr = `  ${C.grey}•${C.reset}  ${C.bYellow}${totTok} tok${C.reset} ${C.grey}(in:${inTok} | out:${outTok})${C.reset}`;
+  }
+
   return `
-${C.bWhite}🤖 N.E.X.A${C.reset}  ${C.grey}•${C.reset}  ${C.cyan}${elapsed}ms${C.reset}  ${C.grey}•${C.reset}  ${C.bGreen}${intent}${C.reset}
+${C.bWhite}🤖 N.E.X.A${C.reset}  ${C.grey}•${C.reset}  ${C.cyan}${elapsed}ms${C.reset}${tokenStr}  ${C.grey}•${C.reset}  ${C.bGreen}${intent}${C.reset}
 
 ${framedLines}
 `;
@@ -344,7 +352,8 @@ async function main() {
         } else {
           const reply  = result.body.reply  || '(tidak ada balasan)';
           const intent = result.body.intent || 'UNKNOWN';
-          console.log(formatReplyBox(reply, elapsed, intent));
+          const tokens = result.body.tokens || null;
+          console.log(formatReplyBox(reply, elapsed, intent, tokens));
         }
 
       } catch (err) {
