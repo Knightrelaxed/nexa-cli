@@ -1,11 +1,11 @@
 {
-  "name": "nexa-cli",
+  "name": "nexa-assistant-console",
   "version": "2.8.0",
   "description": "Universal Terminal CLI untuk N.E.X.A AI Assistant — terhubung ke server N.E.X.A dari laptop manapun",
   "main": "index.js",
   "bin": {
-    "nexa-cli": "./index.js",
-    "nexa": "./index.js"
+    "nexa-assistant-console": "./index.js",
+    "nexa-cli": "./index.js"
   },
   "scripts": {
     "start": "node index.js"
