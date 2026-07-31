@@ -1,52 +1,73 @@
-# N.E.X.A Universal CLI
+# N.E.X.A Universal Terminal Console (`nexa-assistant-console`)
 
-Terminal interface untuk **N.E.X.A AI Assistant** — terhubung ke server N.E.X.A dari laptop manapun.
+Terminal interface resmi untuk **N.E.X.A AI Assistant v2.8** — terhubung ke N.E.X.A Core Server dari terminal laptop manapun di dunia.
 
-## Cara Pakai
+---
 
-### Dari laptop manapun (cukup punya Node.js):
+## 🚀 Cara Menjalankan CLI
+
+### 1. Perintah Resmi NPM Registry (Universal dari Komputer Manapun):
+```bash
+npx nexa-assistant-console
+```
+*(Atau via alias `npx nexa-cli`)*
+
+### 2. Perintah Developer Source (Langsung dari GitHub):
 ```bash
 npx github:Knightrelaxed/nexa-cli
 ```
 
-### Pertama kali dijalankan:
+---
+
+## ⚙️ Setup Konfigurasi Pertama Kali
+
+Saat pertama kali dijalankan, CLI akan meminta dua parameter yang disimpan lokal di `~/.nexa-config.json`:
+1. **NEXA Server URL:** `https://nexa-asistant-nexa-core-server.hf.space` (atau `http://127.0.0.1:3000` untuk mode dev lokal).
+2. **Secret Key (NEXA_CLI_SECRET):** `cLiNeXa17`
+
 ```
-╔══════════════════════════════════════════════════╗
-║   🤖  N.E.X.A — Universal Terminal CLI            ║
-╚══════════════════════════════════════════════════╝
+┌──────────────────────────────────────────────────────────┐
+│  N.E.X.A CORE  │  UNIVERSAL TERMINAL INTERFACE v2.8      │
+│  ──────────────────────────────────────────────────────  │
+│  STATUS : ONLINE          USER : FAQIH HIDAYATULLOH      │
+│  STREAM : REALTIME PUSH   AUTH : AES-CLI-SEC (OK)        │
+│  SERVER : http://127.0.0.1:3000                          │
+└──────────────────────────────────────────────────────────┘
+ Ketik "exit" atau "keluar" untuk menutup terminal.
 
-⚙️  Konfigurasi belum ditemukan. Setup sekali ini saja.
-
-🔐 NEXA Server URL   → https://nexa-asistant-nexa-core-server.hf.space
-🔐 Secret Key        → ••••••••••••••••
-
-✅ Tersimpan di ~/.nexa-config.json
-```
-
-### Selanjutnya langsung terhubung:
-```
-╔══════════════════════════════════════════════════╗
-║   🤖  N.E.X.A — Universal Terminal CLI            ║
-╚══════════════════════════════════════════════════╝
-
-✅ Terhubung ke: nexa-asistant-nexa-core-server.hf.space
-
-👤 Tuan Faqih: halo nexa
-🤖 N.E.X.A (881ms · GREETING): Selamat siang, Tuan Faqih! ...
-
-👤 Tuan Faqih: _
+❖ TUAN FAQIH ──❯ 
 ```
 
-## Reset Konfigurasi
+---
 
-```bash
-# Hapus config lama, setup ulang
-del %USERPROFILE%\.nexa-config.json       # Windows
-rm ~/.nexa-config.json                    # Linux/Mac
-```
+## 📦 Prosedur Pembaruan Versi Package NPM (Developer Release Guide)
 
-## Keamanan
+Setiap kali terjadi perubahan kode di repo ini dan ingin di-publish ke NPM:
 
-- Config disimpan lokal di `~/.nexa-config.json` (hanya di laptop Tuan)
-- Seluruh otak N.E.X.A (AI Router, Supabase, API Keys) tetap aman di server cloud
-- Komunikasi menggunakan HTTPS + Bearer Token authentication
+1. **Commit & Push ke GitHub**:
+   ```bash
+   git add .
+   git commit -m "feat: perbaikan/fitur baru"
+   git push origin main
+   ```
+
+2. **BUMP Nomor Versi di `package.json`**:
+   ```bash
+   npm version patch   # 2.8.0 -> 2.8.1 (Fix)
+   # atau
+   npm version minor   # 2.8.0 -> 2.9.0 (Fitur Baru)
+   ```
+
+3. **Publish ke NPM Registry**:
+   ```bash
+   npm publish --access public
+   ```
+
+---
+
+## 🛡️ Keamanan
+
+- Config tersimpan lokal di `~/.nexa-config.json` (hanya di laptop Tuan Faqih).
+- Seluruh otak N.E.X.A (AI Router, Supabase, API Keys) tetap aman di server cloud.
+- Komunikasi menggunakan HTTPS + Bearer Token Authentication.
+
